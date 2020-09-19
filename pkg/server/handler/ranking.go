@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"20dojo-online/pkg/dcontext"
 	"20dojo-online/pkg/http/response"
@@ -43,21 +42,20 @@ func HandleRankingList() http.HandlerFunc {
 			return
 		}
 
-		var start int
 		s := request.FormValue("start")
 		if s == "" {
 			log.Println("Illegal parameter")
 			response.InternalServerError(writer, "Internal Server Error,illegal parameter")
 			return
 		}
-		start, err = strconv.Atoi(s)
+
 		if err != nil {
 			log.Println(err)
 			response.InternalServerError(writer, "Internal Server Error")
 			return
 		}
 
-		results, rankErr := model.GetRankingList(start)
+		results, rankErr := model.GetRankingList()
 		if rankErr != nil {
 			log.Println(err)
 			response.InternalServerError(writer, "Internal Server Error")

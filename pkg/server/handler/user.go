@@ -49,7 +49,6 @@ func HandleUserCreate() http.HandlerFunc {
 			AuthToken: authToken.String(),
 			Name:      requestBody.Name,
 			HighScore: 0,
-			Coin:      0,
 		})
 		if err != nil {
 			log.Println(err)
@@ -101,7 +100,6 @@ func HandleUserGet() http.HandlerFunc {
 			ID:        user.ID,
 			Name:      user.Name,
 			HighScore: user.HighScore,
-			Coin:      user.Coin,
 		})
 	}
 }
@@ -110,7 +108,6 @@ type userGetResponse struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	HighScore int32  `json:"highScore"`
-	Coin      int32  `json:"coin"`
 }
 
 // HandleUserUpdate ユーザ情報更新処理

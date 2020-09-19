@@ -24,10 +24,6 @@ func Serve(addr string) {
 		post(middleware.Authenticate(handler.HandleGameFinish())))
 	http.HandleFunc("/ranking/list",
 		get(middleware.Authenticate(handler.HandleRankingList())))
-	http.HandleFunc("/gacha/draw",
-		post(middleware.Authenticate(handler.HandleGachaDraw())))
-	http.HandleFunc("/collection/list",
-		get(middleware.Authenticate(handler.HandleCollectionList())))
 
 	/* ===== サーバの起動 ===== */
 	//乱数設定

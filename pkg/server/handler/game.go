@@ -45,15 +45,14 @@ func HandleGameFinish() http.HandlerFunc {
 		//userテーブルのハイスコアとコインの更新処理
 
 		addedScore := requestBody.Score
-		addedCoin := addedScore
-		err = model.UpdateUserScoreCoin(user, addedScore, addedCoin)
+		err = model.UpdateUserScoreCoin(user, addedScore)
 		if err != nil {
 			log.Println(err)
 			response.InternalServerError(writer, "Internal Server Error")
 			return
 		}
 
-		response.Success(writer, &gameFinishResponse{Coin: addedCoin})
+		response.Success(writer, &gameFinishResponse{Score: addedScore})
 
 	}
 }
@@ -62,5 +61,5 @@ type gameFinishRequest struct {
 	Score int32 `json:"score"`
 }
 type gameFinishResponse struct {
-	Coin int32 `json:"coin"`
+	Score int32 `json:"score"`
 }

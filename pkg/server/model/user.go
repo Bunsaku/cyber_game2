@@ -13,7 +13,6 @@ type User struct {
 	AuthToken string
 	Name      string
 	HighScore int32
-	Coin      int32
 }
 
 //RankingList データ
@@ -32,11 +31,11 @@ type RankingListResponse struct {
 // InsertUser データベースをレコードを登録する
 func InsertUser(record *User) error {
 	// userテーブルへのレコードの登録を行うSQLを入力する
-	stmt, err := db.Conn.Prepare("INSERT INTO user (id, auth_token, name, high_score, coin) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := db.Conn.Prepare("INSERT INTO user (id, auth_token, name, high_score) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(record.ID, record.AuthToken, record.Name, record.HighScore, record.Coin)
+	_, err = stmt.Exec(record.ID, record.AuthToken, record.Name, record.HighScore)
 	return err
 }
 
@@ -65,55 +64,30 @@ func UpdateUserByPrimaryKey(record *User) error {
 	return err
 }
 
-//UpdateUserCoin is 'ユーザーのコインを更新'
-func UpdateUserCoin(record *User) error {
-	// idを条件に指定した値でcoinカラムの値を更新するSQLを入力する
-	stmt, err := db.Conn.Prepare("UPDATE user SET coin = coin + ? WHERE id = ?  ")
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec(record.Coin, record.ID)
-	return err
-}
-
 //UpdateUserScoreCoin is 'userのスコアとコインを更新する'
-func UpdateUserScoreCoin(user *User, addedScore int32, addedCoin int32) error {
+func UpdateUserScoreCoin(user *User, addedScore int32) error {
 	//ハイスコアよりaddedScoreが大きければ、値を更新しそうでなければ更新しない、コインはどちらの場合でもインクリメントする
 	if user.HighScore < addedScore {
-		stmt, err := db.Conn.Prepare("UPDATE user SET high_score = ?,coin = coin + ? WHERE id = ? ")
+		stmt, err := db.Conn.Prepare("UPDATE user SET high_score = ? WHERE id = ? ")
 		if err != nil {
 			return err
 		}
-		_, err = stmt.Exec(addedScore, addedCoin, user.ID)
-		return err
-	} else {
-		stmt, err := db.Conn.Prepare("UPDATE user SET coin = coin + ? WHERE id = ? ")
-		if err != nil {
-			return err
-		}
-		_, err = stmt.Exec(addedCoin, user.ID)
+		_, err = stmt.Exec(addedScore, user.ID)
 		return err
 	}
+	return nil
 }
 
 //GetRankingList is 'ranking listを取得する関数'
-func GetRankingList(start int) (*RankingListResponse, error) {
-	// startに0や負の数が来た時の対応
-	var sqlParam int
-	if start > 0 {
-		sqlParam = start - 1
-	} else if start <= 0 {
-		sqlParam = 0
-		start = 1
-	}
+func GetRankingList() (*RankingListResponse, error) {
 	//データベースからランキングの取得
-	rows, err := db.Conn.Query("SELECT id,name,high_score FROM user ORDER BY high_score DESC LIMIT 5 OFFSET ?", sqlParam)
+	rows, err := db.Conn.Query("SELECT id,name,high_score FROM user ORDER BY high_score DESC LIMIT 5 ")
 	if err != nil {
 		return nil, err
 	}
 	var RankingListResponses RankingListResponse
 	r := RankingList{}
-	i := start
+	i := 1
 	for rows.Next() {
 		err = rows.Scan(&r.UserID, &r.UserName, &r.Score)
 		if err != nil {
@@ -129,7 +103,7 @@ func GetRankingList(start int) (*RankingListResponse, error) {
 // convertToUser rowデータをUserデータへ変換する
 func convertToUser(row *sql.Row) (*User, error) {
 	user := User{}
-	err := row.Scan(&user.ID, &user.AuthToken, &user.Name, &user.HighScore, &user.Coin)
+	err := row.Scan(&user.ID, &user.AuthToken, &user.Name, &user.HighScore)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -138,17 +112,4 @@ func convertToUser(row *sql.Row) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
-}
-
-//DcreaseUserCoin コインの値を更新する関数
-func DcreaseUserCoin(tx *sql.Tx, user *User) error {
-	stmt, err := tx.Prepare("UPDATE user SET coin = ? WHERE id = ?")
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec(user.Coin, user.ID)
-	if err != nil {
-		return err
-	}
-	return nil
 }
