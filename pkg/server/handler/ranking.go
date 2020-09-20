@@ -42,12 +42,12 @@ func HandleRankingList() http.HandlerFunc {
 			return
 		}
 
-		s := request.FormValue("start")
-		if s == "" {
-			log.Println("Illegal parameter")
-			response.InternalServerError(writer, "Internal Server Error,illegal parameter")
-			return
-		}
+		// s := request.FormValue("start")
+		// if s == "" {
+		// 	log.Println("Illegal parameter")
+		// 	response.InternalServerError(writer, "Internal Server Error,illegal parameter")
+		// 	return
+		// }
 
 		if err != nil {
 			log.Println(err)
