@@ -45,7 +45,7 @@ func HandleGameFinish() http.HandlerFunc {
 		//userテーブルのハイスコアとコインの更新処理
 
 		addedScore := requestBody.Score
-		err = model.UpdateUserScoreCoin(user, addedScore)
+		err = model.UpdateUserScore(user, addedScore)
 		if err != nil {
 			log.Println(err)
 			response.InternalServerError(writer, "Internal Server Error")

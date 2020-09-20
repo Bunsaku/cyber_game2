@@ -12,14 +12,9 @@ import (
 func Serve(addr string) {
 
 	/* ===== URLマッピングを行う ===== */
-	http.HandleFunc("/setting/get", get(handler.HandleSettingGet()))
 	http.HandleFunc("/user/create", post(handler.HandleUserCreate()))
 
 	// middlewareは 20dojo-online/pkg/http/middleware パッケージを利用する
-	http.HandleFunc("/user/get",
-		get(middleware.Authenticate(handler.HandleUserGet())))
-	http.HandleFunc("/user/update",
-		post(middleware.Authenticate(handler.HandleUserUpdate())))
 	http.HandleFunc("/game/finish",
 		post(middleware.Authenticate(handler.HandleGameFinish())))
 	http.HandleFunc("/ranking/list",

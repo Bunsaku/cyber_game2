@@ -23,9 +23,19 @@ type RankingList struct {
 	Score    int32  `json:"score"`
 }
 
+//MyRankingList データ
+type MyRankingList struct {
+	UserID   string `json:"userId"`
+	UserName string `json:"userName"`
+	Rank     int    `json:"rank"`
+	Score    int32  `json:"score"`
+	Isme     bool   `json:"isme"`
+}
+
 //RankingListResponse is 'GetRankingListの返り値'
 type RankingListResponse struct {
-	Ranks []RankingList `json:"ranks"`
+	Ranks   []RankingList   `json:"ranks"`
+	MyRanks []MyRankingList `json:"myranks"`
 }
 
 // InsertUser データベースをレコードを登録する
@@ -53,19 +63,8 @@ func SelectUserByPrimaryKey(userID string) (*User, error) {
 	return convertToUser(row)
 }
 
-// UpdateUserByPrimaryKey 主キーを条件にレコードを更新する
-func UpdateUserByPrimaryKey(record *User) error {
-	// idを条件に指定した値でnameカラムの値を更新するSQLを入力する
-	stmt, err := db.Conn.Prepare("UPDATE user SET name = ? WHERE id = ?")
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec(record.Name, record.ID)
-	return err
-}
-
-//UpdateUserScoreCoin is 'userのスコアとコインを更新する'
-func UpdateUserScoreCoin(user *User, addedScore int32) error {
+//UpdateUserScore is 'userのスコアとコインを更新する'
+func UpdateUserScore(user *User, addedScore int32) error {
 	//ハイスコアよりaddedScoreが大きければ、値を更新しそうでなければ更新しない、コインはどちらの場合でもインクリメントする
 	if user.HighScore < addedScore {
 		stmt, err := db.Conn.Prepare("UPDATE user SET high_score = ? WHERE id = ? ")
@@ -79,7 +78,7 @@ func UpdateUserScoreCoin(user *User, addedScore int32) error {
 }
 
 //GetRankingList is 'ranking listを取得する関数'
-func GetRankingList() (*RankingListResponse, error) {
+func GetRankingList(userID string) (*RankingListResponse, error) {
 	//データベースからランキングの取得
 	rows, err := db.Conn.Query("SELECT id,name,high_score FROM user ORDER BY high_score DESC LIMIT 5 ")
 	if err != nil {
@@ -97,6 +96,21 @@ func GetRankingList() (*RankingListResponse, error) {
 		RankingListResponses.Ranks = append(RankingListResponses.Ranks, r)
 		i++
 	}
+
+	row := db.Conn.QueryRow("SELECT id,name,high_score,(SELECT COUNT(*) FROM user b WHERE a.high_score < b.high_score) + 1 AS rank FROM user a WHERE id = ? ORDER BY high_score DESC;", userID)
+
+	rr := MyRankingList{}
+	err = row.Scan(&rr.UserID, &rr.UserName, &rr.Score, &rr.Rank)
+	rr.Isme = true
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		log.Println(err)
+		return nil, err
+	}
+	RankingListResponses.MyRanks = append(RankingListResponses.MyRanks, rr)
+
 	return &RankingListResponses, nil
 }
 

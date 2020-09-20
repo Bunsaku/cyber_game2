@@ -55,7 +55,7 @@ func HandleRankingList() http.HandlerFunc {
 			return
 		}
 
-		results, rankErr := model.GetRankingList()
+		results, rankErr := model.GetRankingList(userID)
 		if rankErr != nil {
 			log.Println(err)
 			response.InternalServerError(writer, "Internal Server Error")
