@@ -52,14 +52,17 @@ func HandleGameFinish() http.HandlerFunc {
 			return
 		}
 
-		response.Success(writer, &gameFinishResponse{Score: addedScore})
+		results, rankErr := model.GetRankingList(userID)
+		if rankErr != nil {
+			log.Println(err)
+			response.InternalServerError(writer, "Internal Server Error")
+			return
+		}
+		response.Success(writer, results)
 
 	}
 }
 
 type gameFinishRequest struct {
-	Score int32 `json:"score"`
-}
-type gameFinishResponse struct {
 	Score int32 `json:"score"`
 }
