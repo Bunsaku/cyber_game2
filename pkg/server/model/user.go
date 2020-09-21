@@ -80,21 +80,18 @@ func UpdateUserScore(user *User, addedScore int32) error {
 //GetRankingList is 'ranking listを取得する関数'
 func GetRankingList(userID string) (*RankingListResponse, error) {
 	//データベースからランキングの取得
-	rows, err := db.Conn.Query("SELECT id,name,high_score FROM user ORDER BY high_score DESC LIMIT 5 ")
+	rows, err := db.Conn.Query("SELECT r1.id, r1.name,r1.high_score,(SELECT count(r2.high_score) FROM user as r2 WHERE r2.high_score>r1.high_score)+1 as rank FROM user as r1 having rank < 6 ORDER BY r1.high_score DESC;")
 	if err != nil {
 		return nil, err
 	}
 	var RankingListResponses RankingListResponse
 	r := RankingList{}
-	i := 1
 	for rows.Next() {
-		err = rows.Scan(&r.UserID, &r.UserName, &r.Score)
+		err = rows.Scan(&r.UserID, &r.UserName, &r.Score, &r.Rank)
 		if err != nil {
 			return nil, err
 		}
-		r.Rank = i
 		RankingListResponses.Ranks = append(RankingListResponses.Ranks, r)
-		i++
 	}
 
 	row := db.Conn.QueryRow("SELECT id,name,high_score,(SELECT COUNT(*) FROM user b WHERE a.high_score < b.high_score) + 1 AS rank FROM user a WHERE id = ? ORDER BY high_score DESC;", userID)
